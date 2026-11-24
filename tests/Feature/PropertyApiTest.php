@@ -113,6 +113,18 @@ class PropertyApiTest extends TestCase
         $this->deleteJson("/api/v1/properties/{$property->id}")->assertForbidden();
     }
 
+    public function test_user_lists_only_own_properties(): void
+    {
+        $user = Sanctum::actingAs(User::factory()->create());
+        $own = Property::factory()->for($user)->create();
+        Property::factory()->create();
+
+        $this->getJson('/api/v1/me/properties')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $own->id);
+    }
+
     public function test_owner_can_delete_property(): void
     {
         $property = Property::factory()->create();

@@ -44,7 +44,7 @@ class PropertyController extends Controller
         }
 
         $properties = Property::query()
-            ->with('user')
+            ->with(['user', 'images'])
             ->filter($filters)
             ->orderBy($column, str_starts_with($sort, '-') ? 'desc' : 'asc')
             ->paginate($filters['per_page'] ?? 15)
@@ -53,16 +53,29 @@ class PropertyController extends Controller
         return PropertyResource::collection($properties);
     }
 
+    /**
+     * List the authenticated user's own properties.
+     */
+    public function mine(Request $request): AnonymousResourceCollection
+    {
+        $properties = $request->user()->properties()
+            ->with(['user', 'images'])
+            ->latest()
+            ->paginate(15);
+
+        return PropertyResource::collection($properties);
+    }
+
     public function store(StorePropertyRequest $request): PropertyResource
     {
         $property = $request->user()->properties()->create($request->validated());
 
-        return new PropertyResource($property->load('user'));
+        return new PropertyResource($property->load(['user', 'images']));
     }
 
     public function show(Property $property): PropertyResource
     {
-        return new PropertyResource($property->load('user'));
+        return new PropertyResource($property->load(['user', 'images']));
     }
 
     public function update(UpdatePropertyRequest $request, Property $property): PropertyResource
@@ -71,7 +84,7 @@ class PropertyController extends Controller
 
         $property->update($request->validated());
 
-        return new PropertyResource($property->load('user'));
+        return new PropertyResource($property->load(['user', 'images']));
     }
 
     public function destroy(Property $property): Response

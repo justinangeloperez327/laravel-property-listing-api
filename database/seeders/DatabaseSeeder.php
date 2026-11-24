@@ -26,5 +26,9 @@ class DatabaseSeeder extends Seeder
         Property::factory(5)->for($user)->create();
 
         $this->call(PropertySeeder::class);
+
+        $user->favoriteProperties()->attach(
+            Property::query()->whereNot('user_id', $user->id)->inRandomOrder()->limit(3)->pluck('id')
+        );
     }
 }

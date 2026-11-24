@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Property extends Model
 {
@@ -48,6 +50,30 @@ class Property extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return HasMany<PropertyImage, $this>
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(PropertyImage::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function favoritedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
+    }
+
+    /**
+     * Delete image records one by one so their stored files are removed too.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(fn (Property $property) => $property->images()->get()->each->delete());
     }
 
     /**

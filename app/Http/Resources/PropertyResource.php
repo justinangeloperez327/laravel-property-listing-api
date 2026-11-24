@@ -36,6 +36,7 @@ class PropertyResource extends JsonResource
                 'latitude' => $this->latitude,
                 'longitude' => $this->longitude,
             ],
+            'images' => PropertyImageResource::collection($this->whenLoaded('images')),
             'owner' => $this->whenLoaded('user', fn () => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
