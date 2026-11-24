@@ -13,9 +13,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->string('type')->index();          // house, apartment, condo, land, commercial
-            $table->string('listing_type')->index();  // sale, rent
-            $table->string('status')->default('available')->index(); // available, pending, sold, rented
+            $table->string('type')->index();
+            $table->string('listing_type')->index();
+            $table->string('status')->default('available')->index();
             $table->decimal('price', 14, 2)->index();
             $table->unsignedTinyInteger('bedrooms')->nullable();
             $table->unsignedTinyInteger('bathrooms')->nullable();

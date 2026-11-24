@@ -17,6 +17,10 @@ class PropertyController extends Controller
 {
     private const SORTABLE = ['price', 'created_at', 'area_sqm', 'bedrooms'];
 
+    /**
+     * List properties with optional filters. Sort with `sort=price` (ascending)
+     * or `sort=-price` (descending); defaults to newest first.
+     */
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
@@ -33,7 +37,6 @@ class PropertyController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        // sort=price (asc) or sort=-price (desc); defaults to newest first.
         $sort = $filters['sort'] ?? '-created_at';
         $column = ltrim($sort, '-');
         if (! in_array($column, self::SORTABLE, true)) {
