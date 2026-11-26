@@ -24,6 +24,10 @@ Run tests: `php artisan test`
 |---|---|---|---|
 | POST | `/register` | – | Create account, returns token |
 | POST | `/login` | – | Returns token |
+| POST | `/forgot-password` | – | Email a password reset link |
+| POST | `/reset-password` | – | Set a new password (`token`, `email`, `password`, `password_confirmation`) |
+| GET | `/email/verify/{id}/{hash}` | signed link | Verify email (link from the verification email) |
+| POST | `/email/verification-notification` | ✓ | Resend the verification email |
 | GET | `/me` | ✓ | Current user |
 | POST | `/logout` | ✓ | Revoke current token |
 | GET | `/properties` | – | List (paginated, filterable) |
@@ -38,7 +42,17 @@ Run tests: `php artisan test`
 | DELETE | `/properties/{id}/favorite` | ✓ | Remove from favourites |
 | GET | `/me/favorites` | ✓ | Your saved properties |
 
-Send the token as `Authorization: Bearer <token>`.
+Send the token as `Authorization: Bearer <token>`. Tokens expire after `SANCTUM_EXPIRATION`
+minutes (default 7 days); resetting a password revokes all of a user's tokens.
+
+Creating, editing or deleting listings and images requires a verified email address
+(unverified users get `403`). Sign-up sends the verification email automatically.
+Password reset emails link to `FRONTEND_URL/reset-password?token=...&email=...`, so
+your frontend should read those values and POST them to `/reset-password`.
+
+Mail uses the `log` driver by default (see `storage/logs/laravel.log`); set the
+`MAIL_*` variables in `.env` to send real email. Run `php artisan schedule:work`
+(or a cron for `schedule:run`) to prune expired tokens daily.
 
 ### List filters
 

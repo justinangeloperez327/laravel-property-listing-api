@@ -44,6 +44,15 @@ class AuthApiTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
+    public function test_expired_token_is_rejected(): void
+    {
+        $token = User::factory()->create()->createToken('api')->plainTextToken;
+
+        $this->travel(config('sanctum.expiration') + 1)->minutes();
+
+        $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
+    }
+
     public function test_user_can_logout(): void
     {
         $user = User::factory()->create();

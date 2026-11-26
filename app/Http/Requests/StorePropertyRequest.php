@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Property;
+use App\Enums\ListingType;
+use App\Enums\PropertyStatus;
+use App\Enums\PropertyType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,9 +23,9 @@ class StorePropertyRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:10000'],
-            'type' => ['required', Rule::in(Property::TYPES)],
-            'listing_type' => ['required', Rule::in(Property::LISTING_TYPES)],
-            'status' => ['sometimes', Rule::in(Property::STATUSES)],
+            'type' => ['required', Rule::enum(PropertyType::class)],
+            'listing_type' => ['required', Rule::enum(ListingType::class)],
+            'status' => ['sometimes', Rule::enum(PropertyStatus::class)],
             'price' => ['required', 'numeric', 'min:0', 'max:999999999999'],
             'bedrooms' => ['nullable', 'integer', 'min:0', 'max:255'],
             'bathrooms' => ['nullable', 'integer', 'min:0', 'max:255'],

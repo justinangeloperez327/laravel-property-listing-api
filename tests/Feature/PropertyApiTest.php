@@ -58,6 +58,24 @@ class PropertyApiTest extends TestCase
         $this->getJson('/api/v1/properties?type=castle')->assertUnprocessable();
     }
 
+    public function test_max_price_below_min_price_is_rejected(): void
+    {
+        $this->getJson('/api/v1/properties?min_price=500&max_price=100')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('max_price');
+    }
+
+    public function test_search_treats_wildcards_literally(): void
+    {
+        $match = Property::factory()->create(['title' => 'Unit with 100% ocean view']);
+        Property::factory()->create(['title' => 'Unit with 1000 sqm garden', 'description' => null, 'address' => 'Main St']);
+
+        $this->getJson('/api/v1/properties?search='.urlencode('100%'))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $match->id);
+    }
+
     public function test_anyone_can_view_a_property(): void
     {
         $property = Property::factory()->create();

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\ListingType;
+use App\Enums\PropertyStatus;
+use App\Enums\PropertyType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePropertyRequest;
 use App\Http\Requests\UpdatePropertyRequest;
@@ -25,12 +28,12 @@ class PropertyController extends Controller
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
-            'type' => ['nullable', Rule::in(Property::TYPES)],
-            'listing_type' => ['nullable', Rule::in(Property::LISTING_TYPES)],
-            'status' => ['nullable', Rule::in(Property::STATUSES)],
+            'type' => ['nullable', Rule::enum(PropertyType::class)],
+            'listing_type' => ['nullable', Rule::enum(ListingType::class)],
+            'status' => ['nullable', Rule::enum(PropertyStatus::class)],
             'city' => ['nullable', 'string', 'max:100'],
             'min_price' => ['nullable', 'numeric', 'min:0'],
-            'max_price' => ['nullable', 'numeric', 'min:0'],
+            'max_price' => ['nullable', 'numeric', 'min:0', Rule::when($request->filled('min_price'), 'gte:min_price')],
             'min_bedrooms' => ['nullable', 'integer', 'min:0'],
             'min_bathrooms' => ['nullable', 'integer', 'min:0'],
             'sort' => ['nullable', 'string'],

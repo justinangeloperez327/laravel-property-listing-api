@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\ListingType;
+use App\Enums\PropertyStatus;
+use App\Enums\PropertyType;
 use App\Models\Property;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -13,18 +16,18 @@ class PropertyFactory extends Factory
 {
     public function definition(): array
     {
-        $type = fake()->randomElement(Property::TYPES);
-        $isLand = $type === 'land';
-        $listingType = fake()->randomElement(Property::LISTING_TYPES);
+        $type = fake()->randomElement(PropertyType::cases());
+        $isLand = $type === PropertyType::Land;
+        $listingType = fake()->randomElement(ListingType::cases());
 
         return [
             'user_id' => User::factory(),
-            'title' => fake()->words(3, true).' '.$type,
+            'title' => fake()->words(3, true).' '.$type->value,
             'description' => fake()->paragraphs(2, true),
             'type' => $type,
             'listing_type' => $listingType,
-            'status' => 'available',
-            'price' => $listingType === 'rent'
+            'status' => PropertyStatus::Available,
+            'price' => $listingType === ListingType::Rent
                 ? fake()->numberBetween(10, 150) * 1000
                 : fake()->numberBetween(1, 50) * 500000,
             'bedrooms' => $isLand ? null : fake()->numberBetween(1, 6),

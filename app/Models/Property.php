@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\ListingType;
+use App\Enums\PropertyStatus;
+use App\Enums\PropertyType;
 use Database\Factories\PropertyFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,14 +18,8 @@ class Property extends Model
     /** @use HasFactory<PropertyFactory> */
     use HasFactory;
 
-    public const TYPES = ['house', 'apartment', 'condo', 'land', 'commercial'];
-
-    public const LISTING_TYPES = ['sale', 'rent'];
-
-    public const STATUSES = ['available', 'pending', 'sold', 'rented'];
-
     protected $attributes = [
-        'status' => 'available',
+        'status' => PropertyStatus::Available->value,
         'country' => 'PH',
     ];
 
@@ -35,6 +32,9 @@ class Property extends Model
     protected function casts(): array
     {
         return [
+            'type' => PropertyType::class,
+            'listing_type' => ListingType::class,
+            'status' => PropertyStatus::class,
             'price' => 'decimal:2',
             'bedrooms' => 'integer',
             'bathrooms' => 'integer',
@@ -86,18 +86,29 @@ class Property extends Model
     public function scopeFilter(Builder $query, array $filters): void
     {
         $query
-            ->when($filters['search'] ?? null, fn (Builder $q, $search) => $q->where(
-                fn (Builder $q) => $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%")
-            ))
+            ->when($filters['search'] ?? null, function (Builder $q, string $search): void {
+                $pattern = '%'.self::escapeLike($search).'%';
+
+                $q->where(fn (Builder $q) => $q
+                    ->whereRaw("title like ? escape '!'", [$pattern])
+                    ->orWhereRaw("description like ? escape '!'", [$pattern])
+                    ->orWhereRaw("address like ? escape '!'", [$pattern]));
+            })
             ->when($filters['type'] ?? null, fn (Builder $q, $v) => $q->where('type', $v))
             ->when($filters['listing_type'] ?? null, fn (Builder $q, $v) => $q->where('listing_type', $v))
             ->when($filters['status'] ?? null, fn (Builder $q, $v) => $q->where('status', $v))
             ->when($filters['city'] ?? null, fn (Builder $q, $v) => $q->where('city', $v))
-            ->when($filters['min_price'] ?? null, fn (Builder $q, $v) => $q->where('price', '>=', $v))
-            ->when($filters['max_price'] ?? null, fn (Builder $q, $v) => $q->where('price', '<=', $v))
+            ->when(isset($filters['min_price']), fn (Builder $q) => $q->where('price', '>=', $filters['min_price']))
+            ->when(isset($filters['max_price']), fn (Builder $q) => $q->where('price', '<=', $filters['max_price']))
             ->when($filters['min_bedrooms'] ?? null, fn (Builder $q, $v) => $q->where('bedrooms', '>=', $v))
             ->when($filters['min_bathrooms'] ?? null, fn (Builder $q, $v) => $q->where('bathrooms', '>=', $v));
+    }
+
+    /**
+     * Escape LIKE wildcards so user input is matched literally (escape character: "!").
+     */
+    public static function escapeLike(string $value): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
     }
 }
